@@ -14,6 +14,8 @@ import Text.XML.HXT.Core
 
 -- Soap Envelope definition
 
+type NsDeclaration = (String, String)
+
 data SoapEnvelope m = SoapEnvelope {
     seHeader :: Maybe SoapHeader,
     seBody :: SoapBody m
@@ -48,12 +50,20 @@ data WsRegistrationService = WsRegistrationService {
     wrsAddress :: String
 } deriving (Show)
 
-defaultConfig :: SysConfigList
-defaultConfig = []
+writeConfig :: SysConfigList
+writeConfig = [
+    withIndent yes
+  , withValidate yes]
+
+readConfig :: SysConfigList
+readConfig = [
+      withRemoveWS yes
+    , withValidate yes
+    , withCheckNamespaces yes]
 
 readEnvelope :: XmlPickler m => String -> IO (Either String (SoapEnvelope m))
 readEnvelope str = do 
-    xs <- runX $ readString defaultConfig str 
+    xs <- runX $ readString readConfig str 
     case xs of
         [] -> return (Left "No SOAP envelope found")
         [x] -> return $ unpickleDoc' xpSoapEnvelope x
@@ -65,16 +75,28 @@ writeEnvelope envelope = do
     [str] <- runX $ (
         constA xmlTree
         >>>
-        writeDocumentToString defaultConfig
+        writeDocumentToString writeConfig
         )
     return str
 
 -- Xml picklers
 
+soapPrefix = "s"
+addrPrefix = "wsa"
+coorPrefix = "wscoor"
+nsSoap = "http://www.w3.org/2001/12/soap-envelope"
+nsAddr = "http://schemas.xmlsoap.org/ws/2004/08/addressing"
+nsCoor = "http://docs.oasis-open.org/ws-tx/wscoor/2006/06"
+
+xpElemSoap = xpElemNS nsSoap soapPrefix
+xpElemAddr = xpElemNS nsAddr addrPrefix
+xpElemCoor = xpElemNS nsCoor coorPrefix
+
 xpSoapEnvelope :: XmlPickler m => PU (SoapEnvelope m)
-xpSoapEnvelope = xpElem "Envelope" $
-            xpAddFixedAttr "xmlns:s" "http://www.w3.org/2001/12/soap-envelope" $
-            xpAddFixedAttr "s:encodingStyle" "http://www.w3.org/2001/12/soap-encoding" $
+xpSoapEnvelope = xpElemSoap "Envelope" $
+            xpAddNSDecl soapPrefix nsSoap $
+            xpFilterAttr (hasName "encodingStyle") $
+--            xpAddFixedAttr "s:encodingStyle" "http://www.w3.org/2001/12/soap-encoding" $
             xpWrap ( \ (h, b) -> SoapEnvelope h b
                 , \ se -> (seHeader se, seBody se)
                 ) $
@@ -84,30 +106,32 @@ instance XmlPickler m => XmlPickler (SoapEnvelope m) where
     xpickle = xpSoapEnvelope
 
 instance XmlPickler SoapHeader where
-    xpickle = xpElem "Header" $
+    xpickle = xpElemSoap "Header" $
             xpWrap ( \wscoord -> SoapHeader wscoord,
                 \sh -> shWsCoord sh) $
             xpOption xpickle
 
 instance XmlPickler WsCoordinationContext where
-    xpickle = xpElem "CoordinationContext" $
+    xpickle = xpElemCoor "CoordinationContext" $
+            xpAddNSDecl addrPrefix nsAddr $
+            xpAddNSDecl coorPrefix nsCoor $ 
             xpWrap ( \(i, e, c, rs) -> WsCoordinationContext i e c rs,
                 \wscc -> (wcIdentifier wscc, wcExpires wscc, 
                     wcCoordinationType wscc, wcRegistrationService wscc)
                 ) $
-            xp4Tuple (xpElem "Identifier" xpText)
-                     (xpElem "Expires" xpPrim)
-                     (xpElem "CoordinationType" xpText)
+            xp4Tuple (xpElemCoor "Identifier" xpText)
+                     (xpElemCoor "Expires" xpPrim)
+                     (xpElemCoor "CoordinationType" xpText)
                      (xpickle)
 
 instance XmlPickler WsRegistrationService where
-    xpickle = xpElem "RegistrationService" $
+    xpickle = xpElemCoor "RegistrationService" $
             xpWrap (\s -> WsRegistrationService s,
                 \s -> wrsAddress s) $
-            xpElem "Address" xpText
+            xpElemAddr "Address" xpText
 
 instance XmlPickler m => XmlPickler (SoapBody m) where
-    xpickle = xpElem "Body" $
+    xpickle = xpElemSoap "Body" $
             xpWrap ( \body -> SoapBody body,
                 \sb -> sbBody sb
                 ) $

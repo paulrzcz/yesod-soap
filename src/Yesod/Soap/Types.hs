@@ -10,7 +10,6 @@ module Yesod.Soap.Types
     , writeEnvelope
     ) where
 
-import Data.Text (Text)
 import Text.XML.HXT.Arrow.Pickle
 
 -- Soap Envelope definition
@@ -32,27 +31,27 @@ data SoapBody m = SoapBody {
 type SoapFault = SoapBody FaultBody
 
 data FaultBody = Fault {
-    faultCode :: Text,
-    faultString :: Text,
-    faultActor :: Maybe Text,
-    faultDetail :: Maybe Text
+    faultCode :: String,
+    faultString :: String,
+    faultActor :: Maybe String,
+    faultDetail :: Maybe String
 } deriving (Show)
 
 data WsCoordinationContext = WsCoordinationContext {
-    wcIdentifier :: Text,
+    wcIdentifier :: String,
     wcExpires :: Integer,
-    wcCoordinationType :: Text,
+    wcCoordinationType :: String,
     wcRegistrationService :: WsRegistrationService
 } deriving (Show)
 
 data WsRegistrationService = WsRegistrationService {
-    wrsAddress :: Text
+    wrsAddress :: String
 } deriving (Show)
 
-readEnvelope :: Text -> SoapEnvelope m
+readEnvelope :: String -> SoapEnvelope m
 readEnvelope = undefined
 
-writeEnvelope :: SoapEnvelope m -> Text
+writeEnvelope :: SoapEnvelope m -> String
 writeEnvelope = undefined
 
 -- Xml picklers
@@ -67,7 +66,31 @@ instance XmlPickler m => XmlPickler (SoapEnvelope m) where
             xpPair (xpOption (xpickle)) xpickle
 
 instance XmlPickler SoapHeader where
-    xpickle = undefined
+    xpickle = xpElem "Header" $
+            xpWrap ( \wscoord -> SoapHeader wscoord,
+                \sh -> shWsCoord sh) $
+            xpOption xpickle
+
+instance XmlPickler WsCoordinationContext where
+    xpickle = xpElem "CoordinationContext" $
+            xpWrap ( \(i, e, c, rs) -> WsCoordinationContext i e c rs,
+                \wscc -> (wcIdentifier wscc, wcExpires wscc, 
+                    wcCoordinationType wscc, wcRegistrationService wscc)
+                ) $
+            xp4Tuple (xpElem "Identifier" xpText)
+                     (xpElem "Expires" xpPrim)
+                     (xpElem "CoordinationType" xpText)
+                     (xpickle)
+
+instance XmlPickler WsRegistrationService where
+    xpickle = xpElem "RegistrationService" $
+            xpWrap (\s -> WsRegistrationService s,
+                \s -> wrsAddress s) $
+            xpElem "Address" xpText
 
 instance XmlPickler m => XmlPickler (SoapBody m) where
-    xpickle = undefined
+    xpickle = xpElem "Body" $
+            xpWrap ( \body -> SoapBody body,
+                \sb -> sbBody sb
+                ) $
+            xpickle

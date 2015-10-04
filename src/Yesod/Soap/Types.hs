@@ -10,7 +10,7 @@ module Yesod.Soap.Types
     , writeEnvelope
     ) where
 
-import Text.XML.HXT.Arrow.Pickle
+import Text.XML.HXT.Core
 
 -- Soap Envelope definition
 
@@ -48,22 +48,40 @@ data WsRegistrationService = WsRegistrationService {
     wrsAddress :: String
 } deriving (Show)
 
-readEnvelope :: String -> SoapEnvelope m
-readEnvelope = undefined
+defaultConfig :: SysConfigList
+defaultConfig = []
 
-writeEnvelope :: SoapEnvelope m -> String
-writeEnvelope = undefined
+readEnvelope :: XmlPickler m => String -> IO (Either String (SoapEnvelope m))
+readEnvelope str = do 
+    xs <- runX $ readString defaultConfig str 
+    case xs of
+        [] -> return (Left "No SOAP envelope found")
+        [x] -> return $ unpickleDoc' xpSoapEnvelope x
+        _ -> return (Left "Too many xml trees in input")
+
+writeEnvelope :: XmlPickler m => SoapEnvelope m -> IO String
+writeEnvelope envelope = do
+    let xmlTree = pickleDoc xpSoapEnvelope envelope
+    [str] <- runX $ (
+        constA xmlTree
+        >>>
+        writeDocumentToString defaultConfig
+        )
+    return str
 
 -- Xml picklers
 
-instance XmlPickler m => XmlPickler (SoapEnvelope m) where
-    xpickle = xpElem "Envelope" $
+xpSoapEnvelope :: XmlPickler m => PU (SoapEnvelope m)
+xpSoapEnvelope = xpElem "Envelope" $
             xpAddFixedAttr "xmlns:s" "http://www.w3.org/2001/12/soap-envelope" $
             xpAddFixedAttr "s:encodingStyle" "http://www.w3.org/2001/12/soap-encoding" $
             xpWrap ( \ (h, b) -> SoapEnvelope h b
                 , \ se -> (seHeader se, seBody se)
                 ) $
             xpPair (xpOption (xpickle)) xpickle
+
+instance XmlPickler m => XmlPickler (SoapEnvelope m) where
+    xpickle = xpSoapEnvelope
 
 instance XmlPickler SoapHeader where
     xpickle = xpElem "Header" $

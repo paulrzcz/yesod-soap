@@ -1,0 +1,4 @@
+module Yesod.Soap
+    (
+    ) where
+

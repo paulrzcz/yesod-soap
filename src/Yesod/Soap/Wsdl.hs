@@ -28,6 +28,10 @@ import Yesod.Soap.Types(writeConfig, readConfig)
 
 newtype SoapWsdl = SoapWsdl { unSoapWsdl :: Wsdl SoapBinding } deriving (Show)
 
+instance XmlPickler SoapWsdl where
+    xpickle = xpWrap (SoapWsdl,
+        unSoapWsdl) xpickle
+
 data Wsdl m = Wsdl { -- definitions
     wsdlNameSpace :: Maybe String,
     wsdlName :: Maybe String,

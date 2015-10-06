@@ -1,7 +1,10 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 module Yesod.Soap.Bindings
     ( SoapBinding
-    , Binding (..)
+    , SoapBindingElement 
+    , SoapOperation 
+    , SoapBody 
+    , SoapFault
     ) where
 
 import Control.Arrow((&&&))
@@ -9,20 +12,13 @@ import Text.XML.HXT.Core
 
 import Yesod.Soap.Common
 
-class Binding binding operation input output fault where
-    xpickleBinding :: PU binding
-    xpickleOperation :: PU operation
-    xpickleInput :: PU input
-    xpickleOutput :: PU output
-    xpickleFault :: PU fault
-
 data SoapBinding = SoapBinding {
     sbBinding :: SoapBindingElement,
     sbOperation :: SoapOperation,
     sbBody :: SoapBody
 }deriving (Show)
 
-data BindingStyle = Rpc | Document deriving Show
+data BindingStyle = Rpc | Document deriving (Show)
 
 data SoapBindingElement = SoapBindingElement {
      sbeStyle :: Maybe BindingStyle,
@@ -40,14 +36,9 @@ data SoapBody = SoapBody {
     sbUse :: Maybe String
 } deriving (Show)
 
--- Binding for Soap
-
-instance Binding SoapBinding where
-    xpickleBinding = undefined
-    xpickleOperation = undefined
-    xpickleInput = undefined
-    xpickleOutput = undefined
-    xpickleFault = undefined
+data SoapFault = SoapFault {
+    
+} deriving (Show)
 
 -- XmlPicklers
 
@@ -60,6 +51,31 @@ instance XmlPickler SoapBody where
         xpTriple (xpAttrImplied "encodingStyle" xpText)
                  (xpAttrImplied "namespace" xpText)
                  (xpAttrImplied "use" xpText)
+
+instance XmlPickler SoapBindingElement where
+    xpickle = xpElemWsdlSoap "binding" $
+        xpWrap (uncurry SoapBindingElement,
+            sbeStyle &&& sbeTransport) $
+        xpPair (xpAttrImplied "style" xpickle)
+               (xpAttr "transport" xpText)
+
+instance XmlPickler BindingStyle where
+    xpickle = xpWrap (fromStr, toStr) xpText
+        where
+            toStr Rpc = "rpc"
+            toStr Document = "document"
+            fromStr "rpc" = Rpc
+            fromStr "document" = Document
+
+instance XmlPickler SoapOperation where
+    xpickle = xpElemWsdlSoap "operation" $
+        xpWrap (uncurry SoapOperation,
+            soAction &&& soStyle) $
+        xpPair (xpAttrImplied "soapAction" xpText)
+               (xpAttrImplied "style" xpickle)
+
+instance XmlPickler SoapFault where
+    xpickle = undefined
 
 -- should be undefined to prevent uncontrolled serialization
 

@@ -1,3 +1,4 @@
+{-# LANGUAGE UndecidableInstances, AllowAmbiguousTypes #-}
 module Yesod.Soap.Wsdl
     ( Wsdl (..)
     , WsdlMessage (..)
@@ -26,18 +27,12 @@ import Yesod.Soap.Bindings
 import Yesod.Soap.Common
 import Yesod.Soap.Types(writeConfig, readConfig)
 
-newtype SoapWsdl = SoapWsdl { unSoapWsdl :: Wsdl SoapBinding } deriving (Show)
-
-instance XmlPickler SoapWsdl where
-    xpickle = xpWrap (SoapWsdl,
-        unSoapWsdl) xpickle
-
-data Wsdl m = Wsdl { -- definitions
+data Wsdl = SoapWsdl { -- definitions
     wsdlNameSpace :: Maybe String,
     wsdlName :: Maybe String,
     wsdlMessages :: [WsdlMessage],
     wsdlPortTypes :: [WsdlPortType],
-    wsdlBindings  :: [WsdlBinding m],
+    wsdlBindings  :: [WsdlBinding],
     wsdlServices  :: [WsdlService]
 } deriving (Show)
 
@@ -91,31 +86,33 @@ data WsdlFault = WsdlFault {
     faultMessage :: QName    
 } deriving (Show)
 
-data WsdlBinding m = WsdlBinding {
+data WsdlBinding = WsdlBinding {
     bindingName :: String,
     bindingType :: QName,
-    bindingOps  :: [WsdlBindingOperation m]
+    bindingCustom :: Maybe SoapBindingElement,
+    bindingOps  :: [WsdlBindingOperation]
 } deriving (Show)
 
-data WsdlBindingOperation m = WsdlBindingOperation {
-    bindingInputs :: [WsdlBindingMessageInput m],
-    bindingOutputs :: [WsdlBindingMessageOutput m],
-    bindingFaults :: [WsdlBindingFault m]    
+data WsdlBindingOperation = WsdlBindingOperation {
+    bindingOpCustom :: Maybe SoapOperation,
+    bindingInputs :: [WsdlBindingMessageInput],
+    bindingOutputs :: [WsdlBindingMessageOutput],
+    bindingFaults :: [WsdlBindingFault]    
 } deriving (Show)
 
-data WsdlBindingMessageInput m = WsdlBindingMessageInput {
+data WsdlBindingMessageInput = WsdlBindingMessageInput {
     bindingMsgInputName :: Maybe String,
-    bindingMsgInput :: m
+    bindingMsgInput :: SoapBody
 } deriving (Show)
 
-data WsdlBindingMessageOutput m = WsdlBindingMessageOutput {
+data WsdlBindingMessageOutput = WsdlBindingMessageOutput {
     bindingMsgOutputName :: Maybe String,
-    bindingMsgOutput :: m
+    bindingMsgOutput :: SoapBody
 } deriving (Show)
 
-data WsdlBindingFault m = WsdlBindingFault {
+data WsdlBindingFault = WsdlBindingFault {
     bindingFaultName :: String,
-    bindingFaultMsg :: Maybe m
+    bindingFaultMsg :: Maybe SoapFault
 } deriving (Show)
 
 data WsdlService = WsdlService {
@@ -130,7 +127,7 @@ data WsdlPort = WsdlPort {
 
 -- read / write section
 
-readWsdl :: (XmlPickler m, Binding m) => String -> IO (Either String (Wsdl m))
+readWsdl :: (XmlPickler m) => String -> IO (Either String Wsdl)
 readWsdl str = do 
     xs <- runX $ readString readConfig str 
     case xs of
@@ -138,7 +135,7 @@ readWsdl str = do
         [x] -> return $ unpickleDoc' xpWsdl x
         _ -> return (Left "Too many xml trees in input")
 
-writeWsdl :: (XmlPickler m, Binding m) => Wsdl m -> IO String
+writeWsdl :: Wsdl -> IO String
 writeWsdl envelope = do
     let xmlTree = pickleDoc xpWsdl envelope
     [str] <- runX (
@@ -150,10 +147,10 @@ writeWsdl envelope = do
 
 -- XmlPicker
 
-xpWsdl :: (XmlPickler m, Binding m) => PU (Wsdl m)
+xpWsdl :: PU Wsdl
 xpWsdl = xpElemWsdl "definitions" $
     xpAddNSDecl wsdlPrefix nsWsdl $
-    xpWrap (\ (ns, n, m, p, b, s) -> Wsdl ns n m p b s,
+    xpWrap (\ (ns, n, m, p, b, s) -> SoapWsdl ns n m p b s,
         \w -> (wsdlNameSpace w, wsdlName w,
         wsdlMessages w, wsdlPortTypes w,
         wsdlBindings w, wsdlServices w)
@@ -168,7 +165,7 @@ xpWsdl = xpElemWsdl "definitions" $
 instance XmlPickler QName where
     xpickle = xpWrap (mkName, qualifiedName) xpText
 
-instance (XmlPickler m, Binding m) => XmlPickler (Wsdl m) where
+instance XmlPickler Wsdl where
     xpickle = xpWsdl
 
 instance XmlPickler WsdlMessage where
@@ -238,42 +235,44 @@ instance XmlPickler WsdlFault where
         ) $ xpPair (xpOption (xpAttr "name" xpText))
                    (xpAttr "message" xpickle)
 
-instance (XmlPickler m, Binding m) => XmlPickler (WsdlBinding m) where
+instance XmlPickler WsdlBinding where
     xpickle = xpElemWsdl "binding" $
-        xpWrap (uncurry3 WsdlBinding,
-            \w -> (bindingName w, bindingType w, bindingOps w)) $
-        xpTriple (xpAttr "name" xpText)
+        xpWrap (uncurry4 WsdlBinding,
+            \w -> (bindingName w, bindingType w, bindingCustom w, bindingOps w)) $
+        xp4Tuple (xpAttr "name" xpText)
                  (xpAttr "type" xpickle)
+                 (xpOption xpickle)
                  (xpList xpickle)
 
-instance (XmlPickler m, Binding m) => XmlPickler (WsdlBindingOperation m) where
+instance XmlPickler WsdlBindingOperation where
     xpickle = xpElemWsdl "operation" $
-        xpWrap (uncurry3 WsdlBindingOperation,
-            \w -> (bindingInputs w, bindingOutputs w, bindingFaults w)) $
-        xpTriple (xpList xpickle)
+        xpWrap (uncurry4 WsdlBindingOperation,
+            \w -> (bindingOpCustom w, bindingInputs w, bindingOutputs w, bindingFaults w)) $
+        xp4Tuple (xpOption xpickle)
+                 (xpList xpickle)
                  (xpList xpickle)
                  (xpList xpickle)
 
 
-instance (XmlPickler m, Binding m) => XmlPickler (WsdlBindingMessageInput m) where
+instance XmlPickler WsdlBindingMessageInput where
     xpickle = xpElemWsdl "input" $
         xpWrap (uncurry WsdlBindingMessageInput,
         bindingMsgInputName &&& bindingMsgInput
         ) $ xpPair (xpOption (xpAttr "name" xpText))
-                   xpickleInput
+                   xpickle
 
-instance (XmlPickler m, Binding m) => XmlPickler (WsdlBindingMessageOutput m) where
+instance XmlPickler WsdlBindingMessageOutput where
     xpickle = xpElemWsdl "output" $
         xpWrap (uncurry WsdlBindingMessageOutput,
         bindingMsgOutputName &&& bindingMsgOutput
         ) $ xpPair (xpOption (xpAttr "name" xpText))
-                   xpickleOutput                    
+                   xpickle                   
 
-instance (XmlPickler m, Binding m) => XmlPickler (WsdlBindingFault m) where
+instance XmlPickler WsdlBindingFault where
     xpickle = xpElemWsdl "fault" $
         xpWrap (uncurry WsdlBindingFault, 
             bindingFaultName &&& bindingFaultMsg) $
-        xpPair (xpAttr "name" xpText) (xpOption xpickleFault)
+        xpPair (xpAttr "name" xpText) (xpOption xpickle)
 
 instance XmlPickler WsdlService where
     xpickle = xpElemWsdl "service" $

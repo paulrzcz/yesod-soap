@@ -1,5 +1,19 @@
 module Yesod.Soap.Wsdl
     ( Wsdl (..)
+    , WsdlMessage (..)
+    , WsdlMessagePart (..)
+    , WsdlPortType (..)
+    , WsdlPortOperation (..)
+    , WsdlOperation (..) 
+    , WsdlParam (..)
+    , WsdlFault (..)
+    , WsdlBinding (..)
+    , WsdlBindingOperation (..)
+    , WsdlBindingMessage (..)
+    , WsdlBindingFault (..)
+    , WsdlService (..)
+    , WsdlPort (..)
+    , QName (..)
     , readWsdl
     , writeWsdl
     ) where

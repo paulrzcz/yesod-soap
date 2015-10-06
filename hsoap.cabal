@@ -18,7 +18,8 @@ cabal-version:       >=1.10
 library
   exposed-modules:     
     Yesod.Soap
-  other-modules:       
+  other-modules:
+    Yesod.Soap.Common
     Yesod.Soap.Types
     Yesod.Soap.Wsdl
   -- other-extensions:    

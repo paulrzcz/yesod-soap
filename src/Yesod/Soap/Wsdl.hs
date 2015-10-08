@@ -18,6 +18,7 @@ module Yesod.Soap.Wsdl
     , QName (..)
     , readWsdl
     , writeWsdl
+    , SoapWsdl (..)
     ) where
 
 import Data.Proxy

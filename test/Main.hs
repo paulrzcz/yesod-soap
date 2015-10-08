@@ -103,7 +103,8 @@ deserializeTest3 = "deserializeTest with custom namespace" ~: ( do
 
 suite = TestSuite {
     suiteName = "Basic serialization",
-    suiteTests = [deserializeTest, serializeTest, deserializeTest2, deserializeTest3, serializeTestWithHeader],
+    suiteTests = [deserializeTest, serializeTest, deserializeTest2, deserializeTest3, serializeTestWithHeader,
+        wsdlGenerationTest],
     suiteConcurrently = False,
     suiteOptions = []
 }

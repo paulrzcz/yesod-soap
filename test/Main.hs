@@ -3,6 +3,7 @@ module Main where
 import Test.HUnitPlus
 import Yesod.Soap
 import Text.XML.HXT.Core
+import WsdlTest
 
 testSoapEnvelope = "<s:Envelope xmlns:s=\"http://www.w3.org/2001/12/soap-envelope\">\n\
 \  <s:Body>\n\

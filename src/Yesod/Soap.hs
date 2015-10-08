@@ -1,8 +1,9 @@
 module Yesod.Soap
-    ( module Yesod.Soap.Types
-    , module Yesod.Soap.Wsdl
+    ( module X
     ) where
 
-import Yesod.Soap.Types
+import Yesod.Soap.Types as X
 
-import Yesod.Soap.Wsdl
+import Yesod.Soap.Wsdl as X
+
+import Yesod.Soap.Bindings as X

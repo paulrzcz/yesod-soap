@@ -19,6 +19,7 @@ library
   exposed-modules:     
     Yesod.Soap
   other-modules:
+    Yesod.Soap.Classes
     Yesod.Soap.Bindings
     Yesod.Soap.Common
     Yesod.Soap.Types

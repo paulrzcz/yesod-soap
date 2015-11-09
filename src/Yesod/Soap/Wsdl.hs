@@ -188,8 +188,8 @@ instance XmlPickler WsdlMessagePart where
             \w -> (partName w, partElement w, partType w)
             ) $
         xpTriple (xpAttr "name" xpText)
-                 (xpOption xpickle)
-                 (xpOption xpickle)
+                 (xpAttrImplied "element" xpickle)
+                 (xpAttrImplied "type" xpickle)
 
 instance XmlPickler WsdlPortType where
     xpickle = xpElemWsdl "portType" $

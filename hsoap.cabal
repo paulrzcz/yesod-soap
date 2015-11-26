@@ -18,6 +18,7 @@ cabal-version:       >=1.10
 library
   exposed-modules:     
     Yesod.Soap
+    Yesod.Soap.Subsite
   other-modules:
     Yesod.Soap.Classes
     Yesod.Soap.Bindings
@@ -25,12 +26,24 @@ library
     Yesod.Soap.Types
     Yesod.Soap.Wsdl
     Yesod.Soap.Bindings
+    Yesod.Soap.Subsite.Foundation
+    Yesod.Soap.Subsite.Dispatch
   -- other-extensions:    
   build-depends:       base  >=4.8 && <5,
                        hxt   >=9.3 && (<9.3.1.5 || >9.3.1.5),
-                       text  >= 1.2
+                       text  >= 1.2,
+                       yesod-core >= 1.4 && < 1.5
   hs-source-dirs:      src
   default-language:    Haskell2010
+
+executable YesodTest
+  main-is: test/YesodTest.hs
+  build-depends:       base  >=4.8 && <5,
+                       hxt   >=9.3 && (<9.3.1.5 || >9.3.1.5),
+                       text  >= 1.2,
+                       yesod                         >= 1.4.1      && < 1.5,
+                       yesod-core >= 1.4 && < 1.5,
+                       hsoap  
 
 Test-Suite all-tests
   default-language:    Haskell2010

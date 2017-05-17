@@ -4,3 +4,4 @@ module Yesod.Soap.Subsite
 
 import           Yesod.Soap.Subsite.Dispatch   as X
 import           Yesod.Soap.Subsite.Foundation as X
+import           Yesod.Soap.Subsite.Routes     as X

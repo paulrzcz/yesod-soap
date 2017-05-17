@@ -4,11 +4,11 @@
 {-# LANGUAGE TypeFamilies      #-}
 module Main where
 
-import Yesod
-import Yesod.Soap
-import Yesod.Soap.Subsite
+import           Yesod
+import           Yesod.Soap
+import           Yesod.Soap.Subsite
 
-import Text.XML.HXT.Core
+import           Text.XML.HXT.Core
 
 data Master = Master {
     getSoap :: SoapServer

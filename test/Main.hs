@@ -1,9 +1,9 @@
 module Main where
 
-import Test.HUnitPlus
-import Yesod.Soap
-import Text.XML.HXT.Core
-import WsdlTest
+import           Test.HUnitPlus
+import           Text.XML.HXT.Core
+import           WsdlTest
+import           Yesod.Soap
 
 testSoapEnvelope = "<s:Envelope xmlns:s=\"http://www.w3.org/2001/12/soap-envelope\">\n\
 \  <s:Body>\n\
@@ -82,21 +82,21 @@ serializeTestWithHeader = "serializeTest" ~: ( do
 deserializeTest = "deserializeTest" ~: ( do
     se <- (readEnvelope testSoapEnvelope) :: IO (Either String StringEnvelope)
     case se of
-        Left x -> assertString x
+        Left x  -> assertString x
         Right x -> putStrLn $ show x
     )
 
 deserializeTest2 = "deserializeTest with encodingStyle" ~: ( do
     se <- (readEnvelope testSoapEnvelopeWithEncoding) :: IO (Either String StringEnvelope)
     case se of
-        Left x -> assertString x
+        Left x  -> assertString x
         Right x -> putStrLn $ show x
     )
 
 deserializeTest3 = "deserializeTest with custom namespace" ~: ( do
     se <- (readEnvelope testSoapEnvelopeWithRtcf) :: IO (Either String RtcfEnvelope)
     case se of
-        Left x -> assertString x
+        Left x  -> assertString x
         Right x -> putStrLn $ show x
     )
 

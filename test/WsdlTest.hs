@@ -1,8 +1,8 @@
 module WsdlTest where
 
-import Test.HUnitPlus
-import Yesod.Soap
-import Text.XML.HXT.Core
+import           Test.HUnitPlus
+import           Text.XML.HXT.Core
+import           Yesod.Soap
 
 defaultMsgs :: [WsdlMessage]
 defaultMsgs = [WsdlMessage {

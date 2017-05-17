@@ -7,9 +7,9 @@ module Yesod.Soap.Subsite.Dispatch
     ( getSoapWsdlR
     ) where
 
-import Yesod.Core
-import Yesod.Soap
-import Yesod.Soap.Subsite.Foundation
+import           Yesod.Core
+import           Yesod.Soap
+import           Yesod.Soap.Subsite.Foundation
 
 getSoapWsdlR :: SoapHandler RepXml
 getSoapWsdlR = do
@@ -28,7 +28,7 @@ getSoapR = do
 
 properFunc (Just _) Nothing = getSoapWsdlR
 properFunc Nothing (Just _) = getSoapXsdR
-properFunc _ _ = notFound 
+properFunc _ _              = notFound
 
 postSoapR :: SoapHandler RepXml
 postSoapR = undefined

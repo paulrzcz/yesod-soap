@@ -16,7 +16,7 @@ module Yesod.Soap.Common
     , nsWsdlSoap
     ) where
 
-import Text.XML.HXT.Core (xpElemNS)
+import           Text.XML.HXT.Core (xpElemNS)
 
 soapPrefix = "s"
 addrPrefix = "wsa"

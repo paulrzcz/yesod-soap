@@ -12,9 +12,9 @@ module Yesod.Soap.Types
     , readConfig
     ) where
 
-import Yesod.Soap.Common
-import Control.Arrow((&&&))
-import Text.XML.HXT.Core
+import           Control.Arrow     ((&&&))
+import           Text.XML.HXT.Core
+import           Yesod.Soap.Common
 
 -- Soap Envelope definition
 
@@ -22,7 +22,7 @@ type NsDeclaration = (String, String)
 
 data SoapEnvelope m = SoapEnvelope {
     seHeader :: Maybe SoapHeader,
-    seBody :: SoapBody m
+    seBody   :: SoapBody m
 } deriving (Show)
 
 data SoapHeader = SoapHeader {
@@ -37,16 +37,16 @@ data SoapBody m = SoapBody {
 type SoapFault = SoapBody FaultBody
 
 data FaultBody = Fault {
-    faultCode :: String,
+    faultCode   :: String,
     faultString :: String,
-    faultActor :: Maybe String,
+    faultActor  :: Maybe String,
     faultDetail :: Maybe String
 } deriving (Show)
 
 data WsCoordinationContext = WsCoordinationContext {
-    wcIdentifier :: String,
-    wcExpires :: Integer,
-    wcCoordinationType :: String,
+    wcIdentifier          :: String,
+    wcExpires             :: Integer,
+    wcCoordinationType    :: String,
     wcRegistrationService :: WsRegistrationService
 } deriving (Show)
 
@@ -66,12 +66,12 @@ readConfig = [
     , withCheckNamespaces yes]
 
 readEnvelope :: XmlPickler m => String -> IO (Either String (SoapEnvelope m))
-readEnvelope str = do 
-    xs <- runX $ readString readConfig str 
+readEnvelope str = do
+    xs <- runX $ readString readConfig str
     case xs of
-        [] -> return (Left "No SOAP envelope found")
+        []  -> return (Left "No SOAP envelope found")
         [x] -> return $ unpickleDoc' xpSoapEnvelope x
-        _ -> return (Left "Too many xml trees in input")
+        _   -> return (Left "Too many xml trees in input")
 
 writeEnvelope :: XmlPickler m => SoapEnvelope m -> IO String
 writeEnvelope envelope = do
@@ -107,9 +107,9 @@ instance XmlPickler SoapHeader where
 instance XmlPickler WsCoordinationContext where
     xpickle = xpElemCoor "CoordinationContext" $
             xpAddNSDecl addrPrefix nsAddr $
-            xpAddNSDecl coorPrefix nsCoor $ 
+            xpAddNSDecl coorPrefix nsCoor $
             xpWrap ( \(i, e, c, rs) -> WsCoordinationContext i e c rs,
-                \wscc -> (wcIdentifier wscc, wcExpires wscc, 
+                \wscc -> (wcIdentifier wscc, wcExpires wscc,
                     wcCoordinationType wscc, wcRegistrationService wscc)
                 ) $
             xp4Tuple (xpElemCoor "Identifier" xpText)

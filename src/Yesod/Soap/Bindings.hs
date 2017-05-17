@@ -1,5 +1,6 @@
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ConstrainedClassMethods #-}
+{-# LANGUAGE FlexibleContexts        #-}
+{-# LANGUAGE TypeFamilies            #-}
 module Yesod.Soap.Bindings
     ( SoapBinding (..)
     , SoapBindingElement (..)
@@ -9,11 +10,11 @@ module Yesod.Soap.Bindings
     , Binding (..)
     ) where
 
-import Data.Proxy
-import Control.Arrow((&&&))
-import Text.XML.HXT.Core
+import           Control.Arrow     ((&&&))
+import           Data.Proxy
+import           Text.XML.HXT.Core
 
-import Yesod.Soap.Common
+import           Yesod.Soap.Common
 
 class Binding m where
     type GBinding m
@@ -40,31 +41,31 @@ instance Binding SoapBinding where
     type GFault SoapBinding = WsdlSoapFault
 
 data SoapBinding = SoapBinding {
-    wsdlSbBinding :: SoapBindingElement,
+    wsdlSbBinding   :: SoapBindingElement,
     wsdlSbOperation :: SoapOperation,
-    wsdlSbBody :: WsdlSoapBody
+    wsdlSbBody      :: WsdlSoapBody
 }deriving (Show)
 
 data BindingStyle = Rpc | Document deriving (Show)
 
 data SoapBindingElement = SoapBindingElement {
-     sbeStyle :: Maybe BindingStyle,
+     sbeStyle     :: Maybe BindingStyle,
      sbeTransport :: String
 } deriving (Show)
 
 data SoapOperation = SoapOperation {
     soAction :: Maybe String,
-    soStyle :: Maybe BindingStyle
+    soStyle  :: Maybe BindingStyle
 } deriving (Show)
 
 data WsdlSoapBody = WsdlSoapBody {
     sbEncodingStyle :: Maybe String,
-    sbNameSpace :: Maybe String,
-    sbUse :: Maybe String
+    sbNameSpace     :: Maybe String,
+    sbUse           :: Maybe String
 } deriving (Show)
 
 data WsdlSoapFault = WsdlSoapFault {
-    
+
 } deriving (Show)
 
 -- XmlPicklers
@@ -89,9 +90,9 @@ instance XmlPickler SoapBindingElement where
 instance XmlPickler BindingStyle where
     xpickle = xpWrap (fromStr, toStr) xpText
         where
-            toStr Rpc = "rpc"
+            toStr Rpc      = "rpc"
             toStr Document = "document"
-            fromStr "rpc" = Rpc
+            fromStr "rpc"      = Rpc
             fromStr "document" = Document
 
 instance XmlPickler SoapOperation where

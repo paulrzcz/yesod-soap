@@ -4,19 +4,19 @@
 name:                hsoap
 version:             0.1.0.0
 synopsis:            Soap Envelope serialization
--- description:         
+-- description:
 license:             BSD2
 license-file:        LICENSE
 author:              Pavel Ryzhov
 maintainer:          paul@paulrz.cz
--- copyright:           
+-- copyright:
 category:            Web
 build-type:          Simple
--- extra-source-files:  
+-- extra-source-files:
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     
+  exposed-modules:
     Yesod.Soap
     Yesod.Soap.Subsite
   other-modules:
@@ -28,22 +28,24 @@ library
     Yesod.Soap.Bindings
     Yesod.Soap.Subsite.Foundation
     Yesod.Soap.Subsite.Dispatch
-  -- other-extensions:    
+  -- other-extensions:
   build-depends:       base  >=4.8 && <5,
-                       hxt   >=9.3 && (<9.3.1.5 || >9.3.1.5),
-                       text  >= 1.2,
-                       yesod-core >= 1.4 && < 1.5
+                       hxt,
+                       text,
+                       yesod-core
   hs-source-dirs:      src
   default-language:    Haskell2010
+  ghc-options: -ddump-splices -ddump-to-file
 
 executable YesodTest
   main-is: test/YesodTest.hs
   build-depends:       base  >=4.8 && <5,
-                       hxt   >=9.3 && (<9.3.1.5 || >9.3.1.5),
-                       text  >= 1.2,
-                       yesod                         >= 1.4.1      && < 1.5,
-                       yesod-core >= 1.4 && < 1.5,
-                       hsoap  
+                       hxt,
+                       text,
+                       yesod,
+                       yesod-core,
+                       hsoap
+  default-language: Haskell2010
 
 Test-Suite all-tests
   default-language:    Haskell2010
@@ -52,8 +54,8 @@ Test-Suite all-tests
   other-modules:
     WsdlTest
   hs-source-dirs: test
-  build-depends: 
+  build-depends:
     base  >=4.8 && <5,
     HUnit-Plus,
-    hxt   >=9.3 && (<9.3.1.5 || >9.3.1.5),
+    hxt,
     hsoap
